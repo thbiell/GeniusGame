@@ -1,66 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Pressable, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Audio } from "expo-av";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setGameSequence,
-} from "../../reducer/gameSlice";
+import { setGameSequence } from "../../reducer/gameSlice";
 
-const Game = () => {
-  const colors = ['green', 'red', 'yellow', 'blue'];
+const HardGame = () => {
+  const colors = [1, 2, 3, 4, 5, 6];
   const [hasGameStarted, setHasGameStarted] = useState(false);
   const [isWaiting, setisWaiting] = useState(false);
   const [isPlaying, setisPlaying] = useState(false);
-  const [buttonSounds, setButtonSounds] = useState({});
   const dispatch = useDispatch();
   const [sequence, setSequence] = useState([]);
   const [buttonsPressedOnRound, setButtonsPressedOnRound] = useState(0);
   const [topScore, setTopScore] = useState(0);
-  const [message, setMessage] = useState('Iniciar');
+  const [message, setMessage] = useState("Iniciar");
   const Gamesequence = useSelector((state) => state.game.gameSequence);
-  const [activeButton, setActiveButton] = useState({
-    green: false,
-    red: false,
-    yellow: false,
-    blue: false,
-  });
-
-  useEffect(() => {
-    // Carrega os sons dos botões
-    async function loadButtonSounds() {
-      const greenSound = new Audio.Sound();
-      await greenSound.loadAsync(require("../../assets/sounds/green.mp3"));
-      const redSound = new Audio.Sound();
-      await redSound.loadAsync(require("../../assets/sounds/red.mp3"));
-      const yellowSound = new Audio.Sound();
-      await yellowSound.loadAsync(require("../../assets/sounds/yellow.mp3"));
-      const blueSound = new Audio.Sound();
-      await blueSound.loadAsync(require("../../assets/sounds/blue.mp3"));
-
-      setButtonSounds({
-        green: greenSound,
-        red: redSound,
-        yellow: yellowSound,
-        blue: blueSound,
-      });
-    }
-
-    loadButtonSounds();
-  }, []);
-
-
+  const [activeButton, setActiveButton] = useState(null);
+  
   function handleGameOver() {
     if (sequence.length - 1 > topScore) setTopScore(sequence.length - 1);
     setHasGameStarted(false);
     setSequence([]);
     setButtonsPressedOnRound(0);
   }
-  
+
   function handleButtonPress(color) {
     if (!hasGameStarted || isWaiting) return;
-  
-    buttonSounds[color].replayAsync();
   
     if (color === sequence[buttonsPressedOnRound]) {
       if (buttonsPressedOnRound === sequence.length - 1) {
@@ -72,21 +37,22 @@ const Game = () => {
         setButtonsPressedOnRound(buttonsPressedOnRound + 1);
       }
     } else {
-      setMessage('Reiniciar');
+      setMessage("Reiniciar");
       handleGameOver();
     }
+  
+    // Atualizar o objeto activeButton com o índice correto
+    setActiveButton(color);
   }
   
 
-
-  function generateSequence(s) {
+  function generateSequence() {
     const randomIndex = Math.floor(Math.random() * colors.length);
     const newSequence = [...sequence, colors[randomIndex]];
     dispatch(setGameSequence(newSequence));
     setSequence(newSequence);
     return newSequence;
   }
-  
 
   function handleStartGame() {
     setHasGameStarted(true);
@@ -94,31 +60,29 @@ const Game = () => {
   }
 
   useEffect(() => {
-    console.log('sequence: ', sequence);
     if (sequence.length) {
-      async function playSequence(index) {
-        setMessage('Atenção');
+      async function playSequence() {
+        setMessage("Atenção");
         setisWaiting(true);
         setisPlaying(false);
-        setTimeout(async () => {
-          setActiveButton({ ...activeButton, [sequence[index]]: true });
-
-          await buttonSounds[sequence[index]].replayAsync();
-          setTimeout(() => {
-            setActiveButton({ ...activeButton, [sequence[index]]: false });
-            if (index < sequence.length - 1) playSequence(index + 1);
-
-            setTimeout(() => {
-              setisWaiting(false);
-              setisPlaying(true);
-            }, 600 * sequence.length);
-          }, 300);
-        }, 300);
+  
+        for (let i = 0; i < sequence.length; i++) {
+          setActiveButton(sequence[i]);
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          setActiveButton(null);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+  
+        setisWaiting(false);
+        setisPlaying(true);
+        setMessage(String(sequence.length - 1));
       }
-
-      playSequence(0);
+  
+      playSequence();
     }
-  }, [sequence]);
+  }, [sequence, setActiveButton]);
+  
+
 
   useEffect(() => {
     if (isWaiting && !isPlaying) {
@@ -135,37 +99,29 @@ const Game = () => {
   Top Score: {topScore || (sequence.length - 1 === -1 ? "Nenhum" : String(sequence.length - 1))}
   {topScore && !hasGameStarted ? "\nClique no botão para reiniciar" : ""}
 </Text>
-        <View style={styles.buttonsContainer}>
-          <Pressable
-            disabled={!hasGameStarted || isWaiting}
-            style={[styles.button, styles.greenButton, activeButton.green && styles.activeButton]}
-            onPress={() => handleButtonPress("green")}
-          />
-          <Pressable
-            disabled={!hasGameStarted || isWaiting}
-            style={[styles.button, styles.redButton, activeButton.red && styles.activeButton]}
-            onPress={() => handleButtonPress("red")}
-          />
-          <Pressable
-            style={[styles.button, styles.yellowButton, activeButton.yellow && styles.activeButton]}
-            disabled={!hasGameStarted || isWaiting}
-            onPress={() => handleButtonPress("yellow")}
-          />
-          <Pressable
-            style={[styles.button, styles.blueButton, activeButton.blue && styles.activeButton]}
-            disabled={!hasGameStarted || isWaiting}
-            onPress={() => handleButtonPress("blue")}
-          />
 
+        <View style={styles.buttonsContainer}>
+          {colors.map((color, index) => (
+            <Pressable
+            key={index}
+            disabled={!hasGameStarted || isWaiting}
+            style={[
+              styles.button,
+              activeButton === color && styles.activeButton
+            ]}
+            onPress={() => handleButtonPress(color)}
+          />
+          
+          ))}
         </View>
-        <Pressable style={styles.startButton} onPress={() => handleStartGame()} disabled={hasGameStarted}>
+        <Pressable style={styles.startButton} onPress={handleStartGame} disabled={hasGameStarted}>
           <Text style={styles.startButtonText}>{message}</Text>
         </Pressable>
-
       </View>
     </LinearGradient>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -173,6 +129,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  
   gameContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -194,30 +151,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   button: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: 60,
     margin: 8,
+    backgroundColor: "gray"
   },
   activeButton:{
     backgroundColor: "white",
-    width: 100,
-    height: 100,
+    width: 90,
+    height: 90,
     borderRadius: 50,
     borderWidth: 4,
     borderColor: '#FFFFFF',
-  },
-  greenButton: {
-    backgroundColor: "green",
-  },
-  redButton: {
-    backgroundColor: "red",
-  },
-  yellowButton: {
-    backgroundColor: "yellow",
-  },
-  blueButton: {
-    backgroundColor: "blue",
   },
   restartButton: {
     backgroundColor: "gray",
@@ -241,4 +187,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Game;
+export default HardGame;

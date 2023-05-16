@@ -4,7 +4,10 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 const CreateUser = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

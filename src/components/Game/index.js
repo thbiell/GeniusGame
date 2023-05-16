@@ -1,12 +1,50 @@
 import React, { useEffect, useState } from "react";
+<<<<<<< HEAD
+import { initializeApp } from '../../../firebase-api';
+=======
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 import { StyleSheet, View, Pressable, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
 import { useDispatch, useSelector } from "react-redux";
+<<<<<<< HEAD
+import { getAuth } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+=======
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 import {
   setGameSequence,
 } from "../../reducer/gameSlice";
 
+<<<<<<< HEAD
+const auth = getAuth();
+const db = getFirestore();
+const user = auth.currentUser
+if (user) {
+  // O usuário está autenticado, então podemos salvar os dados no Firestore
+  const userRef = doc(db, 'users', user.uid);
+  const data = {
+    // Dados que deseja salvar
+  };
+
+  setDoc(userRef, data)
+    .then(() => {
+      console.log('Dados salvos com sucesso!');
+    })
+    .catch((error) => {
+      console.error('Erro ao salvar dados:', error);
+    });
+} else {
+  console.log('Usuário não está autenticado');
+}
+
+function saveTopScore(topscore) {
+  const userRef = doc(db, "users", user.uid);
+  setDoc(userRef, { topscore: topscore }, { merge: true });
+}
+
+=======
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 const Game = () => {
   const colors = ['green', 'red', 'yellow', 'blue'];
   const [hasGameStarted, setHasGameStarted] = useState(false);
@@ -26,6 +64,10 @@ const Game = () => {
     blue: false,
   });
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
   useEffect(() => {
     // Carrega os sons dos botões
     async function loadButtonSounds() {
@@ -56,12 +98,21 @@ const Game = () => {
     setSequence([]);
     setButtonsPressedOnRound(0);
   }
+<<<<<<< HEAD
+
+  function handleButtonPress(color) {
+    if (!hasGameStarted || isWaiting) return;
+
+    buttonSounds[color].replayAsync();
+
+=======
   
   function handleButtonPress(color) {
     if (!hasGameStarted || isWaiting) return;
   
     buttonSounds[color].replayAsync();
   
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
     if (color === sequence[buttonsPressedOnRound]) {
       if (buttonsPressedOnRound === sequence.length - 1) {
         setTimeout(() => {
@@ -76,7 +127,11 @@ const Game = () => {
       handleGameOver();
     }
   }
+<<<<<<< HEAD
+
+=======
   
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 
 
   function generateSequence(s) {
@@ -86,7 +141,11 @@ const Game = () => {
     setSequence(newSequence);
     return newSequence;
   }
+<<<<<<< HEAD
+
+=======
   
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 
   function handleStartGame() {
     setHasGameStarted(true);
@@ -102,23 +161,48 @@ const Game = () => {
         setisPlaying(false);
         setTimeout(async () => {
           setActiveButton({ ...activeButton, [sequence[index]]: true });
+<<<<<<< HEAD
+  
+=======
 
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
           await buttonSounds[sequence[index]].replayAsync();
           setTimeout(() => {
             setActiveButton({ ...activeButton, [sequence[index]]: false });
             if (index < sequence.length - 1) playSequence(index + 1);
+<<<<<<< HEAD
+  
+            setTimeout(() => {
+              setisWaiting(false);
+              setisPlaying(true);
+  
+              // Verifica se é um novo topscore e salva no banco de dados
+              if (index === sequence.length - 1 && sequence.length - 1 > topScore) {
+                setTopScore(sequence.length - 1);
+                saveTopScore(sequence.length - 1);
+              }
+=======
 
             setTimeout(() => {
               setisWaiting(false);
               setisPlaying(true);
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
             }, 600 * sequence.length);
           }, 300);
         }, 300);
       }
+<<<<<<< HEAD
+  
+      playSequence(0);
+    }
+  }, [sequence]);
+  
+=======
 
       playSequence(0);
     }
   }, [sequence]);
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
 
   useEffect(() => {
     if (isWaiting && !isPlaying) {
@@ -131,10 +215,17 @@ const Game = () => {
   return (
     <LinearGradient colors={["#000428", "#004E92"]} style={styles.container}>
       <View style={styles.gameContainer}>
+<<<<<<< HEAD
+        <Text style={styles.scoreText}>
+          Top Score: {topScore || (sequence.length - 1 === -1 ? "Nenhum" : String(sequence.length - 1))}
+          {topScore && !hasGameStarted ? "\nClique no botão para reiniciar" : ""}
+        </Text>
+=======
       <Text style={styles.scoreText}>
   Top Score: {topScore || (sequence.length - 1 === -1 ? "Nenhum" : String(sequence.length - 1))}
   {topScore && !hasGameStarted ? "\nClique no botão para reiniciar" : ""}
 </Text>
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
         <View style={styles.buttonsContainer}>
           <Pressable
             disabled={!hasGameStarted || isWaiting}
@@ -199,7 +290,11 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     margin: 8,
   },
+<<<<<<< HEAD
+  activeButton: {
+=======
   activeButton:{
+>>>>>>> 0e76042787cbb0dac24c751141d4f93c91b553d6
     backgroundColor: "white",
     width: 100,
     height: 100,

@@ -1,11 +1,40 @@
 import React, { useEffect, useState } from "react";
+import { initializeApp } from '../../../firebase-api';
 import { StyleSheet, View, Pressable, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
 import { useDispatch, useSelector } from "react-redux";
+import { getAuth } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import {
   setGameSequence,
 } from "../../reducer/gameSlice";
+
+const auth = getAuth();
+const db = getFirestore();
+const user = auth.currentUser
+if (user) {
+  // O usuário está autenticado, então podemos salvar os dados no Firestore
+  const userRef = doc(db, 'users', user.uid);
+  const data = {
+    // Dados que deseja salvar
+  };
+
+  setDoc(userRef, data)
+    .then(() => {
+      console.log('Dados salvos com sucesso!');
+    })
+    .catch((error) => {
+      console.error('Erro ao salvar dados:', error);
+    });
+} else {
+  console.log('Usuário não está autenticado');
+}
+
+function saveTopScore(topscore) {
+  const userRef = doc(db, "users", user.uid);
+  setDoc(userRef, { topscore: topscore }, { merge: true });
+}
 
 const Game = () => {
   const colors = ['green', 'red', 'yellow', 'blue'];
@@ -25,6 +54,7 @@ const Game = () => {
     yellow: false,
     blue: false,
   });
+
 
   useEffect(() => {
     // Carrega os sons dos botões
@@ -56,12 +86,12 @@ const Game = () => {
     setSequence([]);
     setButtonsPressedOnRound(0);
   }
-  
+
   function handleButtonPress(color) {
     if (!hasGameStarted || isWaiting) return;
-  
+
     buttonSounds[color].replayAsync();
-  
+
     if (color === sequence[buttonsPressedOnRound]) {
       if (buttonsPressedOnRound === sequence.length - 1) {
         setTimeout(() => {
@@ -76,7 +106,7 @@ const Game = () => {
       handleGameOver();
     }
   }
-  
+
 
 
   function generateSequence(s) {
@@ -86,7 +116,7 @@ const Game = () => {
     setSequence(newSequence);
     return newSequence;
   }
-  
+
 
   function handleStartGame() {
     setHasGameStarted(true);
@@ -102,23 +132,30 @@ const Game = () => {
         setisPlaying(false);
         setTimeout(async () => {
           setActiveButton({ ...activeButton, [sequence[index]]: true });
-
+  
           await buttonSounds[sequence[index]].replayAsync();
           setTimeout(() => {
             setActiveButton({ ...activeButton, [sequence[index]]: false });
             if (index < sequence.length - 1) playSequence(index + 1);
-
+  
             setTimeout(() => {
               setisWaiting(false);
               setisPlaying(true);
+  
+              // Verifica se é um novo topscore e salva no banco de dados
+              if (index === sequence.length - 1 && sequence.length - 1 > topScore) {
+                setTopScore(sequence.length - 1);
+                saveTopScore(sequence.length - 1);
+              }
             }, 600 * sequence.length);
           }, 300);
         }, 300);
       }
-
+  
       playSequence(0);
     }
   }, [sequence]);
+  
 
   useEffect(() => {
     if (isWaiting && !isPlaying) {
@@ -131,10 +168,10 @@ const Game = () => {
   return (
     <LinearGradient colors={["#000428", "#004E92"]} style={styles.container}>
       <View style={styles.gameContainer}>
-      <Text style={styles.scoreText}>
-  Top Score: {topScore || (sequence.length - 1 === -1 ? "Nenhum" : String(sequence.length - 1))}
-  {topScore && !hasGameStarted ? "\nClique no botão para reiniciar" : ""}
-</Text>
+        <Text style={styles.scoreText}>
+          Top Score: {topScore || (sequence.length - 1 === -1 ? "Nenhum" : String(sequence.length - 1))}
+          {topScore && !hasGameStarted ? "\nClique no botão para reiniciar" : ""}
+        </Text>
         <View style={styles.buttonsContainer}>
           <Pressable
             disabled={!hasGameStarted || isWaiting}
@@ -199,7 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     margin: 8,
   },
-  activeButton:{
+  activeButton: {
     backgroundColor: "white",
     width: 100,
     height: 100,

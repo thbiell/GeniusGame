@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { initializeApp } from '../../../firebase-api';
 import { StyleSheet, View, Pressable, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Audio } from "expo-av";
 import { useDispatch, useSelector } from "react-redux";
-import { getAuth } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -97,7 +95,11 @@ const Game = () => {
 
 
   function handleGameOver() {
-    if (sequence.length - 1 > topScore) setTopScore(sequence.length - 1);
+    const score = sequence.length - 1;
+    if (score > topScore) {
+      setTopScore(score);
+      saveTopScore(score);
+    }
     setHasGameStarted(false);
     setSequence([]);
     setButtonsPressedOnRound(0);
@@ -122,18 +124,14 @@ const Game = () => {
       handleGameOver();
     }
   }
-
-
-
-  function generateSequence(s) {
+  function generateSequence() {
     const randomIndex = Math.floor(Math.random() * colors.length);
     const newSequence = [...sequence, colors[randomIndex]];
     dispatch(setGameSequence(newSequence));
     setSequence(newSequence);
     return newSequence;
   }
-
-
+  
   function handleStartGame() {
     setHasGameStarted(true);
     generateSequence();
@@ -148,30 +146,24 @@ const Game = () => {
         setisPlaying(false);
         setTimeout(async () => {
           setActiveButton({ ...activeButton, [sequence[index]]: true });
-  
+
           await buttonSounds[sequence[index]].replayAsync();
           setTimeout(() => {
             setActiveButton({ ...activeButton, [sequence[index]]: false });
             if (index < sequence.length - 1) playSequence(index + 1);
-  
+
             setTimeout(() => {
               setisWaiting(false);
               setisPlaying(true);
-  
-              // Verifica se é um novo topscore e salva no banco de dados
-              if (index === sequence.length - 1 && sequence.length - 1 > topScore) {
-                setTopScore(sequence.length - 1);
-                saveTopScore(sequence.length - 1);
-              }
             }, 600 * sequence.length);
           }, 300);
         }, 300);
       }
-  
+
       playSequence(0);
     }
   }, [sequence]);
-  
+
 
   useEffect(() => {
     if (isWaiting && !isPlaying) {

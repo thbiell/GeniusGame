@@ -1,85 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from "react";
+import { Text, StyleSheet } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
+import { Table, Row } from 'react-native-table-component';
+import {
+  getFirestore,
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 
 const RankingsScreen = () => {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
-    // Função para carregar os rankings
     const loadRankings = async () => {
       try {
-        // Obter uma referência para a coleção 'rankings' no Firestore
         const db = getFirestore();
-        const rankingsRef = collection(db, 'rankings');
-
-        // Criar uma consulta para obter os rankings ordenados pelo topscore em ordem decrescente
-        const q = query(rankingsRef, orderBy('topscore', 'desc'), limit(10));
-
-        // Executar a consulta
+        const rankingsRef = collection(db, "users");
+        const q = query(
+          rankingsRef,
+          orderBy("topscore", "desc"),
+          limit(10)
+        );
         const querySnapshot = await getDocs(q);
-
-        // Mapear os documentos para obter os dados dos rankings
-        const rankingsData = querySnapshot.docs.map((doc) => {
+        const rankingsData = querySnapshot.docs.map((doc, index) => {
           const data = doc.data();
-          return {
-            name: data.name.slice(0, 5), // Obter os 5 primeiros dígitos do nome
-            topscore: data.topscore,
-          };
+          const name = data.nome ? data.nome.substring() : "";
+          const topscoreHard = data.topscoreHard || "";
+          const topscoreHardDisplay = topscoreHard ? topscoreHard : "Sem registros";
+          return [
+            index + 1,
+            name,
+            data.topscore,
+            topscoreHardDisplay,
+          ];
         });
-
-        // Definir os rankings carregados no estado
         setRankings(rankingsData);
       } catch (error) {
-        console.error('Erro ao carregar os rankings:', error);
+        console.error("Erro ao carregar os rankings:", error);
       }
     };
 
-    // Carregar os rankings ao montar a tela
     loadRankings();
   }, []);
 
+  const tableHead = ["Posição", "Nome", "Topscore", "TopScore Hard"];
+
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#eeaeca', '#94bbe9']}
+      style={styles.container}
+    >
       <Text style={styles.title}>Rankings de Topscore</Text>
-      {rankings.map((ranking, index) => (
-        <View key={index} style={styles.rankItem}>
-          <Text style={styles.rank}>{index + 1}</Text>
-          <Text style={styles.name}>{ranking.name}</Text>
-          <Text style={styles.topscore}>{ranking.topscore}</Text>
-        </View>
-      ))}
-    </View>
+      <Table borderStyle={styles.tableBorder}>
+        <Row data={tableHead} style={styles.head} textStyle={styles.headText} />
+        {rankings.map((rowData, index) => (
+          <Row
+            key={index}
+            data={rowData}
+            style={styles.row}
+            textStyle={styles.rowText}
+          />
+        ))}
+      </Table>
+    </LinearGradient>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    alignItems: 'center',
+    padding: 60,
+    alignItems: "center",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
-  rankItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+  tableBorder: {
+    borderWidth: 1,
+    borderColor: "#7D2E5F",
   },
-  rank: {
-    marginRight: 8,
-    fontSize: 18,
-    fontWeight: 'bold',
+  head: {
+    height: 40,
+    width: 330,
+    backgroundColor: "#E7ECF1",
   },
-  name: {
-    marginRight: 8,
-    fontSize: 18,
+  headText: {
+    textAlign: "center",
+    fontWeight: "bold",
   },
-  topscore: {
-    fontSize: 18,
+  row: {
+    height: 40,
+    width: 330,
+    textAlign: "center",
+  },
+  rowText: {
+    textAlign: "center",
   },
 });
 

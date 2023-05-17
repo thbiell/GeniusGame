@@ -3,6 +3,31 @@ import { StyleSheet, View, Pressable, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { setGameSequence } from "../../reducer/gameSlice";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+function saveTopScore(topscore) {
+  const db = getFirestore();
+
+  AsyncStorage.getItem('userId')
+    .then((userId) => {
+      if (userId) {
+        const userRef = doc(db, "users", userId);
+        setDoc(userRef, { topscoreHard: topscore }, { merge: true })
+          .then(() => {
+            console.log('Topscore salvo com sucesso!');
+          })
+          .catch((error) => {
+            console.error('Erro ao salvar topscore:', error);
+          });
+      } else {
+        console.log('ID do usuário não encontrado');
+      }
+    })
+    .catch((error) => {
+      console.error('Erro ao obter ID do usuário:', error);
+    });
+}
 
 const HardGame = () => {
   const colors = [1, 2, 3, 4, 5, 6];
@@ -16,9 +41,30 @@ const HardGame = () => {
   const [message, setMessage] = useState("Iniciar");
   const Gamesequence = useSelector((state) => state.game.gameSequence);
   const [activeButton, setActiveButton] = useState(null);
+
+  useEffect(() => {
+    // ...
+
+    // Obtenha o ID do usuário do AsyncStorage e defina-o no estado do componente
+    AsyncStorage.getItem('userId')
+      .then((userId) => {
+        if (userId) {
+          dispatch(setUserId(userId));
+        }
+      })
+      .catch((error) => {
+        console.error('Erro ao obter ID do usuário do AsyncStorage:', error);
+      });
+
+    // ...
+
+  }, []);
   
   function handleGameOver() {
-    if (sequence.length - 1 > topScore) setTopScore(sequence.length - 1);
+    if (sequence.length - 1 > topScore) {
+      setTopScore(sequence.length - 1);
+      saveTopScore(sequence.length - 1); // Salva o topScore no banco de dados
+    }
     setHasGameStarted(false);
     setSequence([]);
     setButtonsPressedOnRound(0);
@@ -68,7 +114,7 @@ const HardGame = () => {
   
         for (let i = 0; i < sequence.length; i++) {
           setActiveButton(sequence[i]);
-          await new Promise((resolve) => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           setActiveButton(null);
           await new Promise((resolve) => setTimeout(resolve, 200));
         }
@@ -80,9 +126,7 @@ const HardGame = () => {
   
       playSequence();
     }
-  }, [sequence, setActiveButton]);
-  
-
+  }, [sequence]);
 
   useEffect(() => {
     if (isWaiting && !isPlaying) {

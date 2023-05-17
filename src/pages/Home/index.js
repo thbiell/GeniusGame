@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Pressable, Text, Image } from 'react-native';
+import { StyleSheet, Pressable, Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 
@@ -22,9 +22,9 @@ const Home = ({ navigation }) => {
       </Pressable>
       <Pressable
         style={styles.button}
-        onPress={() => navigation.navigate('Historic')}
+        onPress={() => navigation.navigate('Ranking')}
       >
-        <Text style={styles.buttonText}>Histórico</Text>
+        <Text style={styles.buttonText}>Ranking</Text>
       </Pressable>
       <Pressable
         style={styles.button}
@@ -36,7 +36,7 @@ const Home = ({ navigation }) => {
         style={styles.button}
         onPress={() => navigation.navigate('Register')}
       >
-        <Text style={styles.buttonText}>Register</Text>
+        <Text style={styles.buttonText}>Novo Usuário</Text>
       </Pressable>
     </LinearGradient>
   );
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     borderRadius: 10,
-    height: 70,
+    height: 50,
     justifyContent: 'center',
     width: 200,
     marginTop: 30,

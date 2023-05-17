@@ -6,34 +6,32 @@ import { Audio } from "expo-av";
 import { useDispatch, useSelector } from "react-redux";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   setGameSequence,
 } from "../../reducer/gameSlice";
 
-const auth = getAuth();
-const db = getFirestore();
-const user = auth.currentUser
-if (user) {
-  // O usuário está autenticado, então podemos salvar os dados no Firestore
-  const userRef = doc(db, 'users', user.uid);
-  const data = {
-    // Dados que deseja salvar
-  };
+function saveTopScore(topscore) {
+  const db = getFirestore();
 
-  setDoc(userRef, data)
-    .then(() => {
-      console.log('Dados salvos com sucesso!');
+  AsyncStorage.getItem('userId')
+    .then((userId) => {
+      if (userId) {
+        const userRef = doc(db, "users", userId);
+        setDoc(userRef, { topscore: topscore }, { merge: true })
+          .then(() => {
+            console.log('Topscore salvo com sucesso!');
+          })
+          .catch((error) => {
+            console.error('Erro ao salvar topscore:', error);
+          });
+      } else {
+        console.log('ID do usuário não encontrado');
+      }
     })
     .catch((error) => {
-      console.error('Erro ao salvar dados:', error);
+      console.error('Erro ao obter ID do usuário:', error);
     });
-} else {
-  console.log('Usuário não está autenticado');
-}
-
-function saveTopScore(topscore) {
-  const userRef = doc(db, "users", user.uid);
-  setDoc(userRef, { topscore: topscore }, { merge: true });
 }
 
 const Game = () => {
@@ -54,6 +52,24 @@ const Game = () => {
     yellow: false,
     blue: false,
   });
+  useEffect(() => {
+    // ...
+
+    // Obtenha o ID do usuário do AsyncStorage e defina-o no estado do componente
+    AsyncStorage.getItem('userId')
+      .then((userId) => {
+        if (userId) {
+          dispatch(setUserId(userId));
+        }
+      })
+      .catch((error) => {
+        console.error('Erro ao obter ID do usuário do AsyncStorage:', error);
+      });
+
+    // ...
+
+  }, []);
+
 
 
   useEffect(() => {
